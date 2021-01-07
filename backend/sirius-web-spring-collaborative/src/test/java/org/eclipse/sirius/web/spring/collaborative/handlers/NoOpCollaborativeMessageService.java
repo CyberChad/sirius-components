@@ -27,6 +27,11 @@ public class NoOpCollaborativeMessageService implements ICollaborativeMessageSer
     }
 
     @Override
+    public String invalidModelerName() {
+        return ""; //$NON-NLS-1$
+    }
+
+    @Override
     public String invalidInput(String expectedInputTypeName, String receivedInputTypeName) {
         return ""; //$NON-NLS-1$
     }

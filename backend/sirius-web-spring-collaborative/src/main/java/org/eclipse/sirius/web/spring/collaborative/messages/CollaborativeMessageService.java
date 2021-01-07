@@ -38,6 +38,11 @@ public class CollaborativeMessageService implements ICollaborativeMessageService
     }
 
     @Override
+    public String invalidModelerName() {
+        return this.messageSourceAccessor.getMessage("INVALID_MODELER_NAME"); //$NON-NLS-1$
+    }
+
+    @Override
     public String invalidInput(String expectedInputTypeName, String receivedInputTypeName) {
         return this.messageSourceAccessor.getMessage("INVALID_INPUT", new Object[] { expectedInputTypeName, receivedInputTypeName }); //$NON-NLS-1$
     }
