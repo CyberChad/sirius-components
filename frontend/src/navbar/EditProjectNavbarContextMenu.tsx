@@ -71,14 +71,17 @@ export const EditProjectNavbarContextMenu = ({
         <Entry label="Download" data-testid="download" />
       </a>
       {settingsEntry}
+      <Permission requiredAccessLevel="EDIT">
+        <Entry icon={<Delete title="" />} label="Delete" onClick={onDelete} data-testid="delete" />
+      </Permission>
+      <Separator />
+      <a href={`/projects/${projectId}/modelers`} data-testid="projects-link">
+        <Entry label="Modelers" data-testid="modelers" />
+      </a>
       <Separator />
       <a href={`/projects`} data-testid="projects-link">
         <Entry label="Back to all projects" data-testid="projects" />
       </a>
-      <Separator />
-      <Permission requiredAccessLevel="EDIT">
-        <Entry icon={<Delete title="" />} label="Delete" onClick={onDelete} data-testid="delete" />
-      </Permission>
     </ContextMenu>
   );
 };
