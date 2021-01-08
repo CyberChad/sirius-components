@@ -11,7 +11,7 @@
  *     Obeo - initial API and implementation
  *******************************************************************************/
 import { useMutation } from '@apollo/client';
-import { Checkbox } from '@material-ui/core';
+import { Checkbox, Snackbar } from '@material-ui/core';
 import Button from '@material-ui/core/Button';
 import Dialog from '@material-ui/core/Dialog';
 import DialogActions from '@material-ui/core/DialogActions';
@@ -20,9 +20,25 @@ import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import FormGroup from '@material-ui/core/FormGroup';
+import IconButton from '@material-ui/core/IconButton';
+import CloseIcon from '@material-ui/icons/Close';
+import { useMachine } from '@xstate/react';
 import gql from 'graphql-tag';
 import PropTypes from 'prop-types';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
+import {
+  ConfirmPublicationEvent,
+  HandleResponseEvent,
+  HideToastEvent,
+  PublishModelerEvent,
+  PublishModelerModalContext,
+  PublishModelerModalEvent,
+  publishModelerModalMachine,
+  SchemaValue,
+  ShowToastEvent,
+  UnconfirmPublicationEvent,
+} from './PublishModelerModalMachine';
+
 const publishModelerMutation = gql`
   mutation publishModeler($input: PublishModelerInput!) {
     publishModeler(input: $input) {
@@ -30,8 +46,6 @@ const publishModelerMutation = gql`
       ... on PublishModelerSuccessPayload {
         modeler {
           id
-          name
-          status
         }
       }
       ... on ErrorPayload {
@@ -48,41 +62,47 @@ const propTypes = {
 };
 
 export const PublishModelerModal = ({ modelerId, onModelerPublished, onClose }) => {
-  const initialState = {
-    confirmed: false,
-    error: '',
-  };
-  const [state, setState] = useState(initialState);
+  const [{ value, context }, dispatch] = useMachine<PublishModelerModalContext, PublishModelerModalEvent>(
+    publishModelerModalMachine
+  );
+  const { publishModelerModal } = value as SchemaValue;
+  const { publicationError } = context;
 
   const onToggleConfirmation = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setState(() => {
-      return { confirmed: event.target.checked, error: '' };
-    });
+    if (event.target.checked) {
+      dispatch({ type: 'CONFIRM' } as ConfirmPublicationEvent);
+    } else {
+      dispatch({ type: 'UNCONFIRM' } as UnconfirmPublicationEvent);
+    }
   };
 
   const [publishModeler, { loading, data, error }] = useMutation(publishModelerMutation);
   useEffect(() => {
     if (!loading) {
       if (error) {
-        setState((_) => {
-          return { confirmed: false, error: error.message };
-        });
+        const showToastEvent: ShowToastEvent = {
+          type: 'SHOW_TOAST',
+          message: error.message,
+        };
+        dispatch(showToastEvent);
       } else if (data?.publishModeler) {
         const { publishModeler } = data;
         if (publishModeler.__typename === 'PublishModelerSuccessPayload') {
+          const successEvent: HandleResponseEvent = { type: 'HANDLE_RESPONSE', data: publishModeler };
+          dispatch(successEvent);
           onModelerPublished();
         } else if (publishModeler.__typename === 'ErrorPayload') {
-          const error = publishModeler.message;
-          setState((_) => {
-            return { confirmed: false, error };
-          });
+          const { message } = publishModeler;
+          const showToastEvent: ShowToastEvent = { type: 'SHOW_TOAST', message };
+          dispatch(showToastEvent);
         }
       }
     }
-  }, [loading, data, error, onModelerPublished]);
+  }, [loading, data, error, onModelerPublished, dispatch]);
 
   const onPublishModeler = (event) => {
     event.preventDefault();
+    dispatch({ type: 'PUBLISH' } as PublishModelerEvent);
     const input = {
       modelerId: modelerId,
     };
@@ -100,16 +120,40 @@ export const PublishModelerModal = ({ modelerId, onModelerPublished, onClose }) 
         <FormGroup row>
           <FormControlLabel
             control={
-              <Checkbox checked={state.confirmed} onChange={onToggleConfirmation} name="publication-confirmed" />
+              <Checkbox
+                checked={publishModelerModal === 'confirmed' || publishModelerModal === 'publishingModeler'}
+                onChange={onToggleConfirmation}
+                name="publication-confirmed"
+              />
             }
             label="Yes I am sure"
           />
         </FormGroup>
+        <Snackbar
+          anchorOrigin={{
+            vertical: 'bottom',
+            horizontal: 'right',
+          }}
+          open={publicationError !== null}
+          autoHideDuration={3000}
+          onClose={() => dispatch({ type: 'HIDE_TOAST' } as HideToastEvent)}
+          message={publicationError}
+          action={
+            <IconButton
+              size="small"
+              aria-label="close"
+              color="inherit"
+              onClick={() => dispatch({ type: 'HIDE_TOAST' } as HideToastEvent)}>
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          }
+          data-testid="error"
+        />
       </DialogContent>
       <DialogActions>
         <Button
           variant="contained"
-          disabled={!state.confirmed}
+          disabled={publishModelerModal !== 'confirmed'}
           onClick={onPublishModeler}
           color="primary"
           data-testid="rename-modeler">

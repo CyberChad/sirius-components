@@ -18,7 +18,6 @@ import org.eclipse.sirius.web.annotations.graphql.GraphQLMutationTypes;
 import org.eclipse.sirius.web.annotations.spring.graphql.MutationDataFetcher;
 import org.eclipse.sirius.web.graphql.datafetchers.IDataFetchingEnvironmentService;
 import org.eclipse.sirius.web.graphql.schema.MutationTypeProvider;
-import org.eclipse.sirius.web.services.api.dto.ErrorPayload;
 import org.eclipse.sirius.web.services.api.dto.IPayload;
 import org.eclipse.sirius.web.services.api.modelers.IModelerService;
 import org.eclipse.sirius.web.services.api.modelers.PublishModelerInput;
@@ -66,10 +65,6 @@ public class MutationPublishModelerDataFetcher implements IDataFetcherWithFieldC
     @Override
     public IPayload get(DataFetchingEnvironment environment) throws Exception {
         var input = this.dataFetchingEnvironmentService.getInput(environment, PublishModelerInput.class);
-        // @formatter:off
-        return this.modelerService.publishModeler(input.getModelerId())
-                                  .map(m -> (IPayload) new PublishModelerSuccessPayload(m))
-                                  .orElse(new ErrorPayload("Unexpected error")); //$NON-NLS-1$
-        // @formatter:on
+        return this.modelerService.publishModeler(input.getModelerId());
     }
 }

@@ -53,6 +53,11 @@ public class CollaborativeMessageService implements ICollaborativeMessageService
     }
 
     @Override
+    public String modelerNotFound() {
+        return this.messageSourceAccessor.getMessage("MODELER_NOT_FOUND"); //$NON-NLS-1$
+    }
+
+    @Override
     public String objectCreationFailed() {
         return this.messageSourceAccessor.getMessage("OBJECT_CREATION_FAILED"); //$NON-NLS-1$
     }

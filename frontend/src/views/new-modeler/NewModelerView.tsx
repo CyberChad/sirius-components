@@ -80,7 +80,7 @@ export const NewModelerView = () => {
     const variables = {
       input: {
         name: name.trim(),
-        parentProjectId: projectId,
+        projectId,
       },
     };
     const submitEvent: HandleCreateModelerEvent = { type: 'HANDLE_CREATE_MODELER' };

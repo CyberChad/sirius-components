@@ -14,6 +14,7 @@ import Button from '@material-ui/core/Button';
 import Paper from '@material-ui/core/Paper';
 import { makeStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
+import { Link } from 'core/link/Link';
 import PropTypes from 'prop-types';
 import React from 'react';
 import { useParams } from 'react-router-dom';
@@ -45,9 +46,9 @@ const useStyles = makeStyles((theme) => ({
   },
 
   content: {
-    display: 'grid',
-    gridTemplateColumns: '1fr',
-    gridTemplateRows: '1fr',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 }));
 
@@ -59,9 +60,11 @@ export const ModelersViewContainer = ({ children }) => {
       <div className={classes.header}>
         <Typography variant="h5">Modelers</Typography>
         <div className={classes.actions}>
-          <Button data-testid="create" color="primary" href={`/projects/${projectId}/new/modeler`} variant="contained">
-            New
-          </Button>
+          <Link to={`/projects/${projectId}/new/modeler`} data-testid="create-link">
+            <Button data-testid="create" color="primary" variant="contained">
+              New
+            </Button>
+          </Link>
         </div>
       </div>
       <Paper className={classes.content}>{children}</Paper>

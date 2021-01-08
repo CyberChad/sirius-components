@@ -11,6 +11,7 @@
  *     Obeo - initial API and implementation
  *******************************************************************************/
 import { useMutation } from '@apollo/client';
+import { Snackbar } from '@material-ui/core';
 import Button from '@material-ui/core/Button';
 import Dialog from '@material-ui/core/Dialog';
 import DialogActions from '@material-ui/core/DialogActions';
@@ -18,9 +19,23 @@ import DialogContent from '@material-ui/core/DialogContent';
 import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import TextField from '@material-ui/core/TextField';
+import CloseIcon from '@material-ui/icons/Close';
+import { useMachine } from '@xstate/react';
+import { IconButton } from 'core/button/Button';
 import gql from 'graphql-tag';
 import PropTypes from 'prop-types';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
+import {
+  HandleChangedNameEvent,
+  HandleRenameModelerEvent,
+  HandleResponseEvent,
+  HideToastEvent,
+  RenameModelerEvent,
+  RenameModelerModalContext,
+  renameModelerModalMachine,
+  SchemaValue,
+  ShowToastEvent,
+} from './RenameModelerModalMachine';
 
 const renameModelerMutation = gql`
   mutation renameModeler($input: RenameModelerInput!) {
@@ -29,8 +44,6 @@ const renameModelerMutation = gql`
       ... on RenameModelerSuccessPayload {
         modeler {
           id
-          name
-          status
         }
       }
       ... on ErrorPayload {
@@ -48,64 +61,55 @@ const propTypes = {
 };
 
 export const RenameModelerModal = ({ modelerId, initialModelerName, onModelerRenamed, onClose }) => {
-  const initialState = {
-    name: initialModelerName,
-    isNameValid: false,
-    error: '',
-    isValid: false,
-  };
-  const [state, setState] = useState(initialState);
-  const { name, isValid } = state;
+  const [{ value, context }, dispatch] = useMachine<RenameModelerModalContext, RenameModelerEvent>(
+    renameModelerModalMachine,
+    {
+      context: {
+        name: initialModelerName,
+      },
+    }
+  );
+  const { renameModelerModal, toast } = value as SchemaValue;
+  const { name, nameIsInvalid, message } = context;
 
   const onNewName = (event) => {
     const newName = event.target.value;
-
-    setState(() => {
-      let isNameValid = newName && newName.length >= 1;
-      let error = '';
-      if (!isNameValid) {
-        error = 'The name is required';
-      }
-      return {
-        name: newName,
-        isNameValid,
-        error,
-        isValid: isNameValid,
-      };
-    });
+    dispatch({ type: 'HANDLE_CHANGED_NAME', name: newName } as HandleChangedNameEvent);
   };
-
-  const [renameModeler, { loading, data, error }] = useMutation(renameModelerMutation);
-  useEffect(() => {
-    if (!loading) {
-      if (error) {
-        setState((prevState) => {
-          const { name, isNameValid } = prevState;
-          return { name, isNameValid, error: error.message, isValid: false };
-        });
-      } else if (data?.renameModeler) {
-        const { renameModeler } = data;
-        if (renameModeler.__typename === 'RenameModelerSuccessPayload') {
-          onModelerRenamed();
-        } else if (renameModeler.__typename === 'ErrorPayload') {
-          const error = renameModeler.message;
-          setState((prevState) => {
-            const { name, isNameValid } = prevState;
-            return { name, isNameValid, error, isValid: false };
-          });
-        }
-      }
-    }
-  }, [loading, data, error, onModelerRenamed]);
 
   const onRenameModeler = (event) => {
     event.preventDefault();
+    dispatch({ type: 'HANDLE_RENAME_MODELER' } as HandleRenameModelerEvent);
     const input = {
       modelerId: modelerId,
       newName: name,
     };
     renameModeler({ variables: { input } });
   };
+
+  const [renameModeler, { loading, data, error }] = useMutation(renameModelerMutation);
+  useEffect(() => {
+    if (!loading) {
+      if (error) {
+        const showToastEvent: ShowToastEvent = {
+          type: 'SHOW_TOAST',
+          message: error.message,
+        };
+        dispatch(showToastEvent);
+      } else if (data?.renameModeler) {
+        const { renameModeler } = data;
+        if (renameModeler.__typename === 'RenameModelerSuccessPayload') {
+          const successEvent: HandleResponseEvent = { type: 'HANDLE_RESPONSE', data: renameModeler };
+          dispatch(successEvent);
+          onModelerRenamed();
+        } else if (renameModeler.__typename === 'ErrorPayload') {
+          const { message } = renameModeler;
+          const showToastEvent: ShowToastEvent = { type: 'SHOW_TOAST', message };
+          dispatch(showToastEvent);
+        }
+      }
+    }
+  }, [loading, data, error, onModelerRenamed, dispatch]);
 
   return (
     <Dialog open={true} onClose={onClose} aria-labelledby="form-dialog-title">
@@ -114,6 +118,8 @@ export const RenameModelerModal = ({ modelerId, initialModelerName, onModelerRen
         <DialogContentText></DialogContentText>
         <TextField
           autoFocus
+          error={nameIsInvalid}
+          helperText="The name must contain between 3 and 20 characters"
           label="Name"
           placeholder="Enter the new modeler name"
           value={name}
@@ -121,11 +127,31 @@ export const RenameModelerModal = ({ modelerId, initialModelerName, onModelerRen
           data-testid="name"
           fullWidth
         />
+        <Snackbar
+          anchorOrigin={{
+            vertical: 'bottom',
+            horizontal: 'right',
+          }}
+          open={toast === 'visible'}
+          autoHideDuration={3000}
+          onClose={() => dispatch({ type: 'HIDE_TOAST' } as HideToastEvent)}
+          message={message}
+          action={
+            <IconButton
+              size="small"
+              aria-label="close"
+              color="inherit"
+              onClick={() => dispatch({ type: 'HIDE_TOAST' } as HideToastEvent)}>
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          }
+          data-testid="error"
+        />
       </DialogContent>
       <DialogActions>
         <Button
           variant="contained"
-          disabled={!isValid}
+          disabled={nameIsInvalid || renameModelerModal === 'renamingModeler'}
           onClick={onRenameModeler}
           color="primary"
           data-testid="rename-modeler">

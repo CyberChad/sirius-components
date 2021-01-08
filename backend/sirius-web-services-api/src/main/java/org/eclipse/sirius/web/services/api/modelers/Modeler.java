@@ -16,6 +16,11 @@ import java.text.MessageFormat;
 import java.util.Objects;
 import java.util.UUID;
 
+import org.eclipse.sirius.web.annotations.Immutable;
+import org.eclipse.sirius.web.annotations.graphql.GraphQLField;
+import org.eclipse.sirius.web.annotations.graphql.GraphQLID;
+import org.eclipse.sirius.web.annotations.graphql.GraphQLNonNull;
+import org.eclipse.sirius.web.annotations.graphql.GraphQLObjectType;
 import org.eclipse.sirius.web.services.api.projects.Project;
 
 /**
@@ -23,44 +28,55 @@ import org.eclipse.sirius.web.services.api.projects.Project;
  *
  * @author pcdavid
  */
+@Immutable
+@GraphQLObjectType
 public class Modeler {
     private final UUID id;
 
     private final String name;
 
-    private final Project parentProject;
+    private final Project project;
 
     private final PublicationStatus publicationStatus;
 
     public Modeler(UUID id, String name, Project parentProject, PublicationStatus publicationStatus) {
         this.id = Objects.requireNonNull(id);
         this.name = Objects.requireNonNull(name);
-        this.parentProject = Objects.requireNonNull(parentProject);
+        this.project = Objects.requireNonNull(parentProject);
         this.publicationStatus = Objects.requireNonNull(publicationStatus);
     }
 
+    @GraphQLID
+    @GraphQLField
+    @GraphQLNonNull
     public UUID getId() {
         return this.id;
     }
 
+    @GraphQLField
+    @GraphQLNonNull
     public String getName() {
         return this.name;
     }
 
-    public Project getParentProject() {
-        return this.parentProject;
+    @GraphQLField
+    @GraphQLNonNull
+    public Project getProject() {
+        return this.project;
     }
 
+    @GraphQLField
+    @GraphQLNonNull
     public PublicationStatus getStatus() {
         return this.publicationStatus;
     }
 
     @Override
     public String toString() {
-        String pattern = "{0} '{'id: {1}, name: {2}, parentProject: { id: {3}, name: {4} }, publicationStatus: {5}'}'"; //$NON-NLS-1$
+        String pattern = "{0} '{'id: {1}, name: {2}, project: { id: {3}, name: {4} }, publicationStatus: {5}'}'"; //$NON-NLS-1$
         // @formatter:off
         return MessageFormat.format(pattern, this.getClass().getSimpleName(), this.id, this.name,
-                                    this.parentProject.getId(), this.getParentProject().getName(),
+                                    this.project.getId(), this.getProject().getName(),
                                     this.publicationStatus);
         // @formatter:on
     }

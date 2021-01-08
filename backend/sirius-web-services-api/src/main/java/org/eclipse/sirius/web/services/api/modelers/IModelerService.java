@@ -13,7 +13,6 @@
 package org.eclipse.sirius.web.services.api.modelers;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 import org.eclipse.sirius.web.services.api.dto.IPayload;
@@ -28,11 +27,9 @@ public interface IModelerService {
 
     IPayload createModeler(CreateModelerInput input);
 
-    Optional<Modeler> renameModeler(UUID modelerId, String newName);
+    IPayload renameModeler(UUID modelerId, String newName);
 
-    Optional<Modeler> publishModeler(UUID modelerId);
+    IPayload publishModeler(UUID modelerId);
 
-    List<Modeler> getModelers(Project parentProject);
-
-    List<Modeler> getAllModelers();
+    List<Modeler> getModelers(Project project);
 }

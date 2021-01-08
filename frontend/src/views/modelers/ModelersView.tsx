@@ -57,7 +57,7 @@ export const ModelersView = () => {
         const errorFetching = { type: 'ERROR_FETCHING', message: modelersError.message } as ErrorFetchingEvent;
         dispatch(errorFetching);
       } else if (modelersData) {
-        let { modelers } = modelersData?.viewer.project;
+        let { modelers } = modelersData.viewer.project;
         const fetchedProjects = { type: 'FETCHED_MODELERS', modelers } as FetchedModelersEvent;
         dispatch(fetchedProjects);
       }
@@ -72,7 +72,7 @@ export const ModelersView = () => {
         const errorFetching = { type: 'ERROR_FETCHING', message: error.message } as ErrorFetchingEvent;
         dispatch(errorFetching);
       } else if (data) {
-        let { modelers } = data?.viewer.project;
+        let { modelers } = data.viewer.project;
         const modelersUpdatedEvent = { type: 'MODELERS_UPDATED', modelers } as ModelersUpdatedEvent;
         dispatch(modelersUpdatedEvent);
       }

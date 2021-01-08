@@ -33,7 +33,7 @@ import { PublishModelerModal } from 'modals/publish-modeler/PublishModelerModal'
 import { RenameModelerModal } from 'modals/rename-modeler/RenameModelerModal';
 import PropTypes from 'prop-types';
 import React from 'react';
-import { useParams } from 'react-router-dom';
+import { Link as ReactLink, useParams } from 'react-router-dom';
 import { View } from 'views/View';
 import {
   ModelersLoadedViewContext,
@@ -55,9 +55,9 @@ const propTypes = {
 };
 const useStyles = makeStyles((theme) => ({
   tableContainer: {
-    display: 'grid',
-    gridTemplateColumns: '1fr',
-    gridTemplateRows: '1fr',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 }));
 export const ModelersLoadedView = ({ modelers, onModelerUpdated }) => {
@@ -114,16 +114,6 @@ export const ModelersLoadedView = ({ modelers, onModelerUpdated }) => {
     modal = <PublishModelerModal modelerId={modeler.id} onModelerPublished={onCloseModal} onClose={onCloseModal} />;
   }
 
-  const sortedModelers = [...modelers].sort((a, b) => {
-    if (a.name < b.name) {
-      return -1;
-    } else if (a.name > b.name) {
-      return 1;
-    } else {
-      return 0;
-    }
-  });
-
   return (
     <View>
       <ModelersViewContainer>
@@ -137,8 +127,13 @@ export const ModelersLoadedView = ({ modelers, onModelerUpdated }) => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {sortedModelers.map((modeler) => (
-                <ModelerTableRow modeler={modeler} modelerURL={`/projects/${projectId}/edit`} onMore={onMore} />
+              {modelers.map((modeler) => (
+                <ModelerTableRow
+                  key={modeler.id}
+                  modeler={modeler}
+                  modelerURL={`/projects/${projectId}/edit`}
+                  onMore={onMore}
+                />
               ))}
             </TableBody>
           </Table>
@@ -154,7 +149,9 @@ const ModelerTableRow = ({ modeler, modelerURL, onMore }) => {
   return (
     <TableRow key={modeler.id}>
       <TableCell component="th" scope="row">
-        <Link href={modelerURL}>{modeler.name}</Link>
+        <Link component={ReactLink} to={modelerURL}>
+          {modeler.name}
+        </Link>
       </TableCell>
       <TableCell component="th" scope="row">
         <Typography>{modeler.status}</Typography>
@@ -191,7 +188,7 @@ const ModelerContextMenu = ({ menuAnchor, onCloseContextMenu, onRename, onPublis
         </ListItemIcon>
         <ListItemText primary="Rename" />
       </MenuItem>
-      <MenuItem onClick={onPublish} data-testid="publish">
+      <MenuItem disabled={modeler.status === 'PUBLISHED'} onClick={onPublish} data-testid="publish">
         <ListItemIcon>
           <PublishIcon />
         </ListItemIcon>

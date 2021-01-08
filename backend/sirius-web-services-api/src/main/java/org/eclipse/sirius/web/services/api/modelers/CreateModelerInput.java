@@ -31,15 +31,15 @@ import org.eclipse.sirius.web.services.api.dto.IInput;
 public final class CreateModelerInput implements IInput {
     private String name;
 
-    private UUID parentProjectId;
+    private UUID projectId;
 
     public CreateModelerInput() {
         // Used by Jackson
     }
 
-    public CreateModelerInput(String name, UUID parentProjectId) {
+    public CreateModelerInput(String name, UUID projectId) {
         this.name = Objects.requireNonNull(name);
-        this.parentProjectId = Objects.requireNonNull(parentProjectId);
+        this.projectId = Objects.requireNonNull(projectId);
     }
 
     @GraphQLField
@@ -51,14 +51,14 @@ public final class CreateModelerInput implements IInput {
     @GraphQLID
     @GraphQLField
     @GraphQLNonNull
-    public UUID getParentProjectId() {
-        return this.parentProjectId;
+    public UUID getProjectId() {
+        return this.projectId;
     }
 
     @Override
     public String toString() {
-        String pattern = "{0} '{'name: {1}, parentProject: {2}'}'"; //$NON-NLS-1$
-        return MessageFormat.format(pattern, this.getClass().getSimpleName(), this.name, this.parentProjectId);
+        String pattern = "{0} '{'name: {1}, projectId: {2}'}'"; //$NON-NLS-1$
+        return MessageFormat.format(pattern, this.getClass().getSimpleName(), this.name, this.projectId);
     }
 
 }

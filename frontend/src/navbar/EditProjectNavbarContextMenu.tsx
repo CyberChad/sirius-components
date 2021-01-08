@@ -14,6 +14,7 @@ import { useCapabilities } from 'capabilities/useCapabilities';
 import { httpOrigin } from 'common/URL';
 import { ContextMenu, Entry, Separator, TOP_START } from 'core/contextmenu/ContextMenu';
 import { Go } from 'core/go/Go';
+import { Link } from 'core/link/Link';
 import { Delete, Edit, Settings } from 'icons';
 import { Permission } from 'project/Permission';
 import PropTypes from 'prop-types';
@@ -75,13 +76,13 @@ export const EditProjectNavbarContextMenu = ({
         <Entry icon={<Delete title="" />} label="Delete" onClick={onDelete} data-testid="delete" />
       </Permission>
       <Separator />
-      <a href={`/projects/${projectId}/modelers`} data-testid="projects-link">
+      <Link to={`/projects/${projectId}/modelers`} data-testid="projects-link">
         <Entry label="Modelers" data-testid="modelers" />
-      </a>
+      </Link>
       <Separator />
-      <a href={`/projects`} data-testid="projects-link">
+      <Link to={`/projects`} data-testid="projects-link">
         <Entry label="Back to all projects" data-testid="projects" />
-      </a>
+      </Link>
     </ContextMenu>
   );
 };

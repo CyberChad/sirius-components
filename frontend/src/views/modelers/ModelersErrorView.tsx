@@ -22,9 +22,9 @@ const propTypes = {
 };
 const useStyles = makeStyles((theme) => ({
   errorMessage: {
-    display: 'grid',
-    gridTemplateColumns: '1fr',
-    gridTemplateRows: '1fr',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
     justifyItems: 'center',
     paddingTop: theme.spacing(8),
     paddingBottom: theme.spacing(8),

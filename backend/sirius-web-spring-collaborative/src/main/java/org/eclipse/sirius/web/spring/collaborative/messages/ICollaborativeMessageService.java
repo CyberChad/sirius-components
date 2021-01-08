@@ -26,5 +26,7 @@ public interface ICollaborativeMessageService {
 
     String projectNotFound();
 
+    String modelerNotFound();
+
     String objectCreationFailed();
 }
