@@ -1,0 +1,147 @@
+= ADR-010 - Support Simple Diagram Definitions
+
+== Context
+
+We want to support the definition of Sirius Web modelers directly in the web interface.
+For this, we need the equivalent of Sirius Desktop's VSM DSL to describe the structure, look & feel of their modelers.
+The Sirius Desktop VSM is very complex, and has quite a lot of legacy issues.
+We will follow the same general principles but restart with a much simpler DSL.
+
+== Decision
+
+The first version will only support diagrams.
+
+We will not use EMF to implement the DSL, but instead define simple POJOs which will be stored as JSON documents in the database.
+
+[source,typescript]
+----
+
+type Expression = string;  // An AQL expression
+type DomainType = string;  // <schema-name>::<entity-name>
+type Color = string;       // any valid CSS
+
+/**
+ * Top-level configuration element to define a diagram type.
+ */
+interface DiagramDescription {
+    /**
+     * Fixed string, presented to the end-user to represent this particular kind of diagram.
+     */
+    name: string;
+    /**
+     * The type of semantic entity on which the diagram can be instanciated.
+     */
+    domainType: DomainType;
+    /**
+     * Computed once on diagram instance creation.
+     * 
+     * Variables available:
+     * - `self`: the semantic entity on which the diagram is created. Guaranteed to be an instance of the `domainType`.
+     */
+    titleExpression: Expression;
+    /**
+     * All the top-level node descriptions that can be instanciated on this kind of diagram.
+     */
+    nodeDescriptions: NodeDescription[];
+    /**
+     * All the edge descriptions that can be instanciated on this kind of diagram.
+     * May refer to `NodeDescription` from any level.
+     */
+    edgeDescriptions: EdgeDescription[];
+}
+
+/**
+ * Configuration elements common to nodes and edges.
+ */
+interface DiagramElementDescription {
+    /**
+     * The type of semantic entity on which this kind of element can be instanciated.
+     */
+    domainType: DomainType;
+    /**
+     * From a given (parent) context, which may be the diagram or a container node,
+     * determines the semantic entities for which instances of this kind of element
+     * *can* be created (which does not mean they *will* be created automatically).
+     * 
+     * Variables available:
+     * - `self`: the semantic entity of the parent/context element. Guaranteed to be an instance
+     *           of the `domainType`.
+     */
+    semanticCandidatesExpression: Expression;
+    /**
+     * Corresponds to Sirius Desktop's 'synchronization':
+     * 
+     * - 'auto': synchronized, the diagram elements will be automatically created on refresh/render
+     *           for every compatible candidate.
+     * - 'explicit': unsynchronized, the refresh/render will only create the element if it has been
+     *               explicitly requested (typically by the user invoking a specific tool which
+     *               translated into a `ViewCreationRequest`).
+     */
+    creationMode: 'auto' | 'explicit';
+    /**
+     * Computed once on diagram instance creation.
+     * 
+     * Variables available:
+     * - `self`: the semantic entity of the newmy create diagram element. Guaranteed to be an instance
+     *           of the `domainType`.
+     */
+    labelExpression: Expression;
+    /**
+     * The visual style to use for the element instances.
+     */
+    style: Style;
+}
+
+/**
+ * Defines a specific kind of node or container. The only difference between nodes and containers
+ * is that container have a non-empty `childrenDescriptions`, and thus potential children elements.
+ */
+interface NodeDescription extends DiagramElementDescription {
+    /**
+     * Descriptions for sub-elements inside this node/container.
+     */
+    childrenDescriptions: NodeDescription[]
+}
+
+/**
+ * Defines a specific kind of edge betwen a source and target node.
+ * <br>
+ * 
+ */
+interface EdgeDescription extends DiagramElementDescription {
+    /**
+     * Indicates whether this represents a domain-based edge (if `true`) or a relation-base one
+     * (if `false`).
+     */
+    isDomainBasedEdge : boolean;
+
+    /**
+     * The type of nodes that can be used as source (resp. target) for this type of edge.
+     */
+    sourceNodeDescriptions, targetNodeDescriptions: NodeDescription[];
+
+    /**
+     * 
+     */
+    sourceNodesExpression, targetNodesExpression: Expression;
+}
+
+/**
+ * The simplest possible notion of style that can apply to both nodes and edges.
+ * Will be augmented later on.
+ */
+interface Style {
+    color: Color;
+}
+----
+
+
+== Status
+
+Accepted.
+
+== Consequences
+
+We need to implement the corresponding POJOs, and store them as JSON documents in the database.
+We will need a _Form_ definition, in Java, to support the authoring of such diagram description by specifiers.
+
