@@ -20,7 +20,7 @@ import org.eclipse.sirius.web.annotations.graphql.GraphQLField;
 import org.eclipse.sirius.web.annotations.graphql.GraphQLID;
 import org.eclipse.sirius.web.annotations.graphql.GraphQLInputObjectType;
 import org.eclipse.sirius.web.annotations.graphql.GraphQLNonNull;
-import org.eclipse.sirius.web.services.api.dto.IInput;
+import org.eclipse.sirius.web.services.api.dto.IProjectInput;
 
 /**
  * The input object of the {@code renameModeler} mutation.
@@ -28,7 +28,7 @@ import org.eclipse.sirius.web.services.api.dto.IInput;
  * @author pcdavid
  */
 @GraphQLInputObjectType
-public final class RenameModelerInput implements IInput {
+public final class RenameModelerInput implements IProjectInput {
     private UUID modelerId;
 
     private String newName;

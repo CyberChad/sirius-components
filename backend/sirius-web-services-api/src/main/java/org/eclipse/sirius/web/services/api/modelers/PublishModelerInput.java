@@ -20,7 +20,7 @@ import org.eclipse.sirius.web.annotations.graphql.GraphQLField;
 import org.eclipse.sirius.web.annotations.graphql.GraphQLID;
 import org.eclipse.sirius.web.annotations.graphql.GraphQLInputObjectType;
 import org.eclipse.sirius.web.annotations.graphql.GraphQLNonNull;
-import org.eclipse.sirius.web.services.api.dto.IInput;
+import org.eclipse.sirius.web.services.api.dto.IProjectInput;
 
 /**
  * The input object for the {@code publishModeler} mutation.
@@ -28,7 +28,7 @@ import org.eclipse.sirius.web.services.api.dto.IInput;
  * @author pcdavid
  */
 @GraphQLInputObjectType
-public final class PublishModelerInput implements IInput {
+public final class PublishModelerInput implements IProjectInput {
     private UUID modelerId;
 
     public PublishModelerInput() {

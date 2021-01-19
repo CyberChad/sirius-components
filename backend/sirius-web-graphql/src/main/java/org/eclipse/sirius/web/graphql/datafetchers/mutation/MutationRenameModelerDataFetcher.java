@@ -13,13 +13,18 @@
 package org.eclipse.sirius.web.graphql.datafetchers.mutation;
 
 import java.util.Objects;
+import java.util.Optional;
 
 import org.eclipse.sirius.web.annotations.graphql.GraphQLMutationTypes;
 import org.eclipse.sirius.web.annotations.spring.graphql.MutationDataFetcher;
+import org.eclipse.sirius.web.collaborative.api.services.IProjectEventProcessorRegistry;
 import org.eclipse.sirius.web.graphql.datafetchers.IDataFetchingEnvironmentService;
+import org.eclipse.sirius.web.graphql.messages.IGraphQLMessageService;
 import org.eclipse.sirius.web.graphql.schema.MutationTypeProvider;
+import org.eclipse.sirius.web.services.api.dto.ErrorPayload;
 import org.eclipse.sirius.web.services.api.dto.IPayload;
 import org.eclipse.sirius.web.services.api.modelers.IModelerService;
+import org.eclipse.sirius.web.services.api.modelers.Modeler;
 import org.eclipse.sirius.web.services.api.modelers.RenameModelerInput;
 import org.eclipse.sirius.web.services.api.modelers.RenameModelerSuccessPayload;
 import org.eclipse.sirius.web.spring.graphql.api.IDataFetcherWithFieldCoordinates;
@@ -57,14 +62,40 @@ public class MutationRenameModelerDataFetcher implements IDataFetcherWithFieldCo
 
     private final IModelerService modelerService;
 
-    public MutationRenameModelerDataFetcher(IDataFetchingEnvironmentService dataFetchingEnvironmentService, IModelerService modelerService) {
+    private final IGraphQLMessageService messageService;
+
+    private IProjectEventProcessorRegistry projectEventProcessorRegistry;
+
+    public MutationRenameModelerDataFetcher(IDataFetchingEnvironmentService dataFetchingEnvironmentService, IModelerService modelerService,
+            IProjectEventProcessorRegistry projectEventProcessorRegistry, IGraphQLMessageService messageService) {
         this.dataFetchingEnvironmentService = Objects.requireNonNull(dataFetchingEnvironmentService);
         this.modelerService = Objects.requireNonNull(modelerService);
+        this.projectEventProcessorRegistry = Objects.requireNonNull(projectEventProcessorRegistry);
+        this.messageService = Objects.requireNonNull(messageService);
     }
 
     @Override
     public IPayload get(DataFetchingEnvironment environment) throws Exception {
         var input = this.dataFetchingEnvironmentService.getInput(environment, RenameModelerInput.class);
-        return this.modelerService.renameModeler(input.getModelerId(), input.getNewName());
+        var context = this.dataFetchingEnvironmentService.getContext(environment);
+
+        IPayload payload = new ErrorPayload(this.messageService.unauthorized());
+
+        Optional<Modeler> optionalModeler = this.modelerService.getModeler(input.getModelerId());
+        if (optionalModeler.isPresent()) {
+            Modeler modeler = optionalModeler.get();
+
+            boolean canEdit = this.dataFetchingEnvironmentService.canEdit(environment, modeler.getProject().getId());
+            if (canEdit) {
+                // @formatter:off
+                payload = this.projectEventProcessorRegistry.dispatchEvent(modeler.getProject().getId(), input, context)
+                                                            .orElse(new ErrorPayload(this.messageService.unexpectedError()));
+                // @formatter:on
+            } else {
+                payload = new ErrorPayload(this.messageService.unexpectedError());
+            }
+
+        }
+        return payload;
     }
 }
