@@ -10,12 +10,12 @@
  * Contributors:
  *     Obeo - initial API and implementation
  *******************************************************************************/
-package org.eclipse.sirius.web.spring.collaborative.modelers;
+package org.eclipse.sirius.web.services.modelers;
 
 import org.eclipse.sirius.web.persistence.entities.ModelerEntity;
 import org.eclipse.sirius.web.services.api.modelers.Modeler;
 import org.eclipse.sirius.web.services.api.modelers.PublicationStatus;
-import org.eclipse.sirius.web.spring.collaborative.projects.ProjectMapper;
+import org.eclipse.sirius.web.services.projects.ProjectMapper;
 
 /**
  * Converts Modeler entities to the corresponding DTO.

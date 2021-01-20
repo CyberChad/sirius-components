@@ -10,7 +10,7 @@
  * Contributors:
  *     Obeo - initial API and implementation
  *******************************************************************************/
-package org.eclipse.sirius.web.spring.collaborative.modelers;
+package org.eclipse.sirius.web.services.modelers;
 
 import java.util.Comparator;
 import java.util.List;
@@ -19,12 +19,12 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.eclipse.sirius.web.core.api.ErrorPayload;
+import org.eclipse.sirius.web.core.api.IPayload;
 import org.eclipse.sirius.web.persistence.entities.ModelerEntity;
 import org.eclipse.sirius.web.persistence.entities.PublicationStatusEntity;
 import org.eclipse.sirius.web.persistence.repositories.IModelerRepository;
 import org.eclipse.sirius.web.persistence.repositories.IProjectRepository;
-import org.eclipse.sirius.web.services.api.dto.ErrorPayload;
-import org.eclipse.sirius.web.services.api.dto.IPayload;
 import org.eclipse.sirius.web.services.api.modelers.CreateModelerInput;
 import org.eclipse.sirius.web.services.api.modelers.CreateModelerSuccessPayload;
 import org.eclipse.sirius.web.services.api.modelers.IModelerService;
@@ -32,7 +32,7 @@ import org.eclipse.sirius.web.services.api.modelers.Modeler;
 import org.eclipse.sirius.web.services.api.modelers.PublishModelerSuccessPayload;
 import org.eclipse.sirius.web.services.api.modelers.RenameModelerSuccessPayload;
 import org.eclipse.sirius.web.services.api.projects.Project;
-import org.eclipse.sirius.web.spring.collaborative.messages.ICollaborativeMessageService;
+import org.eclipse.sirius.web.services.messages.IServicesMessageService;
 import org.springframework.stereotype.Service;
 
 /**
@@ -43,13 +43,13 @@ import org.springframework.stereotype.Service;
 @Service
 public class ModelerService implements IModelerService {
 
-    private final ICollaborativeMessageService messageService;
+    private final IServicesMessageService messageService;
 
     private final IProjectRepository projectRepository;
 
     private final IModelerRepository modelerRepository;
 
-    public ModelerService(ICollaborativeMessageService messageService, IProjectRepository projectRepository, IModelerRepository modelerRepository) {
+    public ModelerService(IServicesMessageService messageService, IProjectRepository projectRepository, IModelerRepository modelerRepository) {
         this.messageService = Objects.requireNonNull(messageService);
         this.projectRepository = Objects.requireNonNull(projectRepository);
         this.modelerRepository = Objects.requireNonNull(modelerRepository);
@@ -57,15 +57,14 @@ public class ModelerService implements IModelerService {
 
     @Override
     public IPayload createModeler(CreateModelerInput input) {
-        var optionalProjectEntity = this.projectRepository.findById(input.getProjectId());
-        return optionalProjectEntity.map(projectEntity -> {
+        return this.projectRepository.findById(input.getProjectId()).map(projectEntity -> {
             String name = input.getName().trim();
             if (!this.isValidModelerName(name)) {
                 return new ErrorPayload(this.messageService.invalidModelerName());
             } else {
                 ModelerEntity modelerEntity = new ModelerEntity();
                 modelerEntity.setName(input.getName());
-                modelerEntity.setProject(optionalProjectEntity.get());
+                modelerEntity.setProject(this.projectRepository.findById(input.getProjectId()).get());
                 modelerEntity.setPublicationStatus(PublicationStatusEntity.DRAFT);
 
                 modelerEntity = this.modelerRepository.save(modelerEntity);
@@ -77,14 +76,13 @@ public class ModelerService implements IModelerService {
 
     @Override
     public IPayload renameModeler(UUID modelerId, String newName) {
-        var optionalModelerEntity = this.modelerRepository.findById(modelerId);
-        return optionalModelerEntity.map(modelerEntity -> {
-            if (this.isValidModelerName(newName)) {
+        return this.modelerRepository.findById(modelerId).map(modelerEntity -> {
+            if (!this.isValidModelerName(newName)) {
+                return new ErrorPayload(this.messageService.invalidModelerName());
+            } else {
                 modelerEntity.setName(newName);
                 modelerEntity = this.modelerRepository.save(modelerEntity);
                 return new RenameModelerSuccessPayload(this.toDTO(modelerEntity));
-            } else {
-                return new ErrorPayload(this.messageService.invalidModelerName());
             }
         }).orElse(new ErrorPayload(this.messageService.modelerNotFound()));
     }

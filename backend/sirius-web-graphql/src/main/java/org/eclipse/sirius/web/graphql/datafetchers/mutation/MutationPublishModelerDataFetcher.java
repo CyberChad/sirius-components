@@ -17,12 +17,12 @@ import java.util.Optional;
 
 import org.eclipse.sirius.web.annotations.graphql.GraphQLMutationTypes;
 import org.eclipse.sirius.web.annotations.spring.graphql.MutationDataFetcher;
-import org.eclipse.sirius.web.collaborative.api.services.IProjectEventProcessorRegistry;
+import org.eclipse.sirius.web.collaborative.api.services.IEditingContextEventProcessorRegistry;
+import org.eclipse.sirius.web.core.api.ErrorPayload;
+import org.eclipse.sirius.web.core.api.IPayload;
 import org.eclipse.sirius.web.graphql.datafetchers.IDataFetchingEnvironmentService;
 import org.eclipse.sirius.web.graphql.messages.IGraphQLMessageService;
 import org.eclipse.sirius.web.graphql.schema.MutationTypeProvider;
-import org.eclipse.sirius.web.services.api.dto.ErrorPayload;
-import org.eclipse.sirius.web.services.api.dto.IPayload;
 import org.eclipse.sirius.web.services.api.modelers.IModelerService;
 import org.eclipse.sirius.web.services.api.modelers.Modeler;
 import org.eclipse.sirius.web.services.api.modelers.PublishModelerInput;
@@ -64,20 +64,19 @@ public class MutationPublishModelerDataFetcher implements IDataFetcherWithFieldC
 
     private final IGraphQLMessageService messageService;
 
-    private IProjectEventProcessorRegistry projectEventProcessorRegistry;
+    private IEditingContextEventProcessorRegistry editingContextEventProcessorRegistry;
 
     public MutationPublishModelerDataFetcher(IDataFetchingEnvironmentService dataFetchingEnvironmentService, IModelerService modelerService,
-            IProjectEventProcessorRegistry projectEventProcessorRegistry, IGraphQLMessageService messageService) {
+            IEditingContextEventProcessorRegistry editingContextEventProcessorRegistry, IGraphQLMessageService messageService) {
         this.dataFetchingEnvironmentService = Objects.requireNonNull(dataFetchingEnvironmentService);
         this.modelerService = Objects.requireNonNull(modelerService);
-        this.projectEventProcessorRegistry = Objects.requireNonNull(projectEventProcessorRegistry);
+        this.editingContextEventProcessorRegistry = Objects.requireNonNull(editingContextEventProcessorRegistry);
         this.messageService = Objects.requireNonNull(messageService);
     }
 
     @Override
     public IPayload get(DataFetchingEnvironment environment) throws Exception {
         var input = this.dataFetchingEnvironmentService.getInput(environment, PublishModelerInput.class);
-        var context = this.dataFetchingEnvironmentService.getContext(environment);
 
         IPayload payload = new ErrorPayload(this.messageService.unauthorized());
 
@@ -88,8 +87,8 @@ public class MutationPublishModelerDataFetcher implements IDataFetcherWithFieldC
             boolean canEdit = this.dataFetchingEnvironmentService.canEdit(environment, modeler.getProject().getId());
             if (canEdit) {
                 // @formatter:off
-                payload = this.projectEventProcessorRegistry.dispatchEvent(modeler.getProject().getId(), input, context)
-                                                            .orElse(new ErrorPayload(this.messageService.unexpectedError()));
+                payload = this.editingContextEventProcessorRegistry.dispatchEvent(modeler.getProject().getId(), input)
+                                                                   .orElse(new ErrorPayload(this.messageService.unexpectedError()));
                 // @formatter:on
             } else {
                 payload = new ErrorPayload(this.messageService.unexpectedError());

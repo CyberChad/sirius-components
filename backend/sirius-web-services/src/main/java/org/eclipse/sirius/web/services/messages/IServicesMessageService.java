@@ -18,5 +18,13 @@ package org.eclipse.sirius.web.services.messages;
  * @author sbegaudeau
  */
 public interface IServicesMessageService {
+
     String invalidProjectName();
+
+    String invalidModelerName();
+
+    String projectNotFound();
+
+    String modelerNotFound();
+
 }

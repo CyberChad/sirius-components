@@ -15,24 +15,23 @@ package org.eclipse.sirius.web.spring.collaborative.modelers;
 import java.util.Objects;
 
 import org.eclipse.sirius.web.collaborative.api.services.EventHandlerResponse;
-import org.eclipse.sirius.web.collaborative.api.services.IProjectEventHandler;
-import org.eclipse.sirius.web.services.api.Context;
-import org.eclipse.sirius.web.services.api.dto.ErrorPayload;
-import org.eclipse.sirius.web.services.api.dto.IPayload;
-import org.eclipse.sirius.web.services.api.dto.IProjectInput;
+import org.eclipse.sirius.web.collaborative.api.services.IEditingContextEventHandler;
+import org.eclipse.sirius.web.core.api.ErrorPayload;
+import org.eclipse.sirius.web.core.api.IEditingContext;
+import org.eclipse.sirius.web.core.api.IInput;
+import org.eclipse.sirius.web.core.api.IPayload;
 import org.eclipse.sirius.web.services.api.modelers.IModelerService;
 import org.eclipse.sirius.web.services.api.modelers.PublishModelerInput;
-import org.eclipse.sirius.web.services.api.objects.IEditingContext;
 import org.eclipse.sirius.web.spring.collaborative.messages.ICollaborativeMessageService;
 import org.springframework.stereotype.Service;
 
 /**
- * Handler used to publis a modeler.
+ * Handler used to publish a modeler.
  *
  * @author pcdavid
  */
 @Service
-public class PublishModelerEventHandler implements IProjectEventHandler {
+public class PublishModelerEventHandler implements IEditingContextEventHandler {
 
     private final ICollaborativeMessageService messageService;
 
@@ -44,18 +43,18 @@ public class PublishModelerEventHandler implements IProjectEventHandler {
     }
 
     @Override
-    public boolean canHandle(IProjectInput projectInput) {
-        return projectInput instanceof PublishModelerInput;
+    public boolean canHandle(IInput input) {
+        return input instanceof PublishModelerInput;
     }
 
     @Override
-    public EventHandlerResponse handle(IEditingContext editingContext, IProjectInput projectInput, Context context) {
+    public EventHandlerResponse handle(IEditingContext editingContext, IInput input) {
         final IPayload payload;
-        if (projectInput instanceof PublishModelerInput) {
-            PublishModelerInput input = (PublishModelerInput) projectInput;
-            payload = this.modelerService.publishModeler(input.getModelerId());
+        if (input instanceof PublishModelerInput) {
+            PublishModelerInput publishModelerInput = (PublishModelerInput) input;
+            payload = this.modelerService.publishModeler(publishModelerInput.getModelerId());
         } else {
-            String message = this.messageService.invalidInput(projectInput.getClass().getSimpleName(), PublishModelerInput.class.getSimpleName());
+            String message = this.messageService.invalidInput(input.getClass().getSimpleName(), PublishModelerInput.class.getSimpleName());
             payload = new ErrorPayload(message);
         }
         return new EventHandlerResponse(false, representation -> false, payload);

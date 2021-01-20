@@ -22,27 +22,7 @@ import org.eclipse.sirius.web.spring.collaborative.messages.ICollaborativeMessag
 public class NoOpCollaborativeMessageService implements ICollaborativeMessageService {
 
     @Override
-    public String invalidProjectName() {
-        return ""; //$NON-NLS-1$
-    }
-
-    @Override
-    public String invalidModelerName() {
-        return ""; //$NON-NLS-1$
-    }
-
-    @Override
     public String invalidInput(String expectedInputTypeName, String receivedInputTypeName) {
-        return ""; //$NON-NLS-1$
-    }
-
-    @Override
-    public String projectNotFound() {
-        return ""; //$NON-NLS-1$
-    }
-
-    @Override
-    public String modelerNotFound() {
         return ""; //$NON-NLS-1$
     }
 
